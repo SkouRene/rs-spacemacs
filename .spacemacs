@@ -47,6 +47,7 @@ values."
 (auto-completion :variables
                      auto-completion-enable-help-tooltip t
                      auto-completion-enable-sort-by-usage t)
+(go :variables go-use-gometalinter t)
 	colors
 	html
 	javascript
@@ -55,6 +56,7 @@ values."
 	emacs-lisp
 	spell-checking
 	syntax-checking
+	go-tab-width 4
      )
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
@@ -63,6 +65,8 @@ values."
    dotspacemacs-additional-packages '(
 yaml-mode
 editorconfig
+es-mode
+exec-path-from-shell
 )
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -299,7 +303,23 @@ before packages are loaded. If you are unsure, you should try in setting them in
   )
 
 (defun dotspacemacs/user-config ()
+(defun set-exec-path-from-shell-PATH ()
+  "Sets the exec-path to the same value used by the user shell"
+  (let ((path-from-shell
+         (replace-regexp-in-string
+          "[[:space:]\n]*$" ""
+          (shell-command-to-string "$SHELL -l -c 'echo $PATH'"))))
+    (setenv "PATH" path-from-shell)
+    (setq exec-path (split-string path-from-shell path-separator))))
+
+;; call function now
+(set-exec-path-from-shell-PATH)
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((elasticsearch . t)))
 (editorconfig-mode 1)
+(show-paren-mode 1)
+(global-whitespace-mode 1)
   ;; PHP stuff
   (setq
     php-mode-coding-style (quote psr2)
@@ -309,6 +329,9 @@ before packages are loaded. If you are unsure, you should try in setting them in
 (push "/usr/local/bin/" load-path)
 (require 'php-cs-fixer)
 (add-to-list 'auto-mode-alist '("\\.blade.php\\'" . web-mode))
+(global-company-mode t)
+(require 'company-go)
+
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -319,7 +342,7 @@ before packages are loaded. If you are unsure, you should try in setting them in
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(evil-want-Y-yank-to-eol nil)
- '(wakatime-api-key "-name")
+ '(wakatime-api-key "")
  '(wakatime-cli-path "/usr/bin/wakatime"))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
